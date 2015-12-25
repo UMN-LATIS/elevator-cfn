@@ -1,0 +1,844 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Elevator: Create an Amazon EC2 instance running the Ubuntu 14.04 (Trusty Tahr) AMI. The AMI is chosen based on the region in which the stack is run. This also creates an EC2 security group for the instance to give you SSH access. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Parameters": {
+    "KeyName": {
+      "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
+      "Type": "AWS::EC2::KeyPair::KeyName",
+      "ConstraintDescription": "must be the name of an existing EC2 KeyPair."
+    },
+    "TranscodeInstanceType": {
+      "Description": "EC2 instance type for transcoders",
+      "Type": "String",
+      "Default": "t2.medium",
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge",
+        "c3.4xlarge",
+        "c3.8xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c4.4xlarge",
+        "c4.8xlarge",
+        "r3.large",
+        "r3.xlarge",
+        "r3.2xlarge",
+        "r3.4xlarge",
+        "r3.8xlarge",
+        "i2.xlarge",
+        "i2.2xlarge",
+        "i2.4xlarge",
+        "i2.8xlarge",
+        "hi1.4xlarge",
+        "hs1.8xlarge",
+        "cr1.8xlarge",
+        "cc2.8xlarge"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+    "TranscodeSpotType": {
+      "Description": "EC2 instance type for Spot Transcoders",
+      "Type": "String",
+      "Default": "c4.xlarge",
+      "AllowedValues": [
+        "t2.micro",
+        "t2.small",
+        "t2.medium",
+        "m3.medium",
+        "m3.large",
+        "m3.xlarge",
+        "m3.2xlarge",
+        "c3.large",
+        "c3.xlarge",
+        "c3.2xlarge",
+        "c3.4xlarge",
+        "c3.8xlarge",
+        "c4.large",
+        "c4.xlarge",
+        "c4.2xlarge",
+        "c4.4xlarge",
+        "c4.8xlarge",
+        "r3.large",
+        "r3.xlarge",
+        "r3.2xlarge",
+        "r3.4xlarge",
+        "r3.8xlarge",
+        "i2.xlarge",
+        "i2.2xlarge",
+        "i2.4xlarge",
+        "i2.8xlarge",
+        "hi1.4xlarge",
+        "hs1.8xlarge",
+        "cr1.8xlarge",
+        "cc2.8xlarge"
+      ],
+      "ConstraintDescription": "must be a valid EC2 instance type."
+    },
+    "TranscodeSpotPrice": {
+      "Description": "Transcode Spot Price",
+      "Type": "String",
+      "Default": "0.04"
+    },
+    "ChefServerURL": {
+      "Description": "Chef Server URL",
+      "Type": "String",
+      "Default": "https://api.opscode.com/organizations/dummy"
+    },
+    "ChefEnvironment": {
+      "Description": "Chef Environment",
+      "Type": "String",
+      "Default": "elevator"
+    },
+    "ChefValidator": {
+      "Description": "Chef Validator Client",
+      "Type": "String",
+      "Default": "lobster-validator"
+    },
+    "ChefVersion": {
+      "Description": "Chef version to install",
+      "Type": "String",
+      "Default": "12.1.0"
+    },
+    "PrivateKeyBucket": {
+      "Description": "S3 Path to validation pem (including pem file)",
+      "Type": "String",
+      "Default": ""
+    },
+    "ChefKeyBucket": {
+      "Description": "S3 Path to chef encryption key",
+      "Type": "String",
+      "Default": ""
+    },
+    "ChefServerUser": {
+      "Description": "IAM user to get chef pem",
+      "Type": "String",
+      "Default": ""
+    },
+    "ScaleUpThreshold": {
+      "Description": "Scale up threshold",
+      "Type": "Number",
+      "Default": "8"
+    },
+    "ScaleDownThreshold": {
+      "Description": "Scale down threshold",
+      "Type": "Number",
+      "Default": "4"
+    },
+    "TargetSubnet": {
+      "Description": "Target Subnet for instances",
+      "Type": "AWS::EC2::Subnet::Id"
+    },
+    "TargetSecurityGroups": {
+      "Description": "Security Groups for Hosts",
+      "Type":"List<AWS::EC2::SecurityGroup::Id>"
+    }
+  },
+  "Mappings": {
+    "AWSInstanceType2Arch": {
+      "t2.micro": {
+        "Arch": "HVM64"
+      },
+      "t2.small": {
+        "Arch": "HVM64"
+      },
+      "t2.medium": {
+        "Arch": "HVM64"
+      },
+      "m3.medium": {
+        "Arch": "HVM64"
+      },
+      "m3.large": {
+        "Arch": "HVM64"
+      },
+      "m3.xlarge": {
+        "Arch": "HVM64"
+      },
+      "m3.2xlarge": {
+        "Arch": "HVM64"
+      },
+      "c3.large": {
+        "Arch": "HVM64"
+      },
+      "c3.xlarge": {
+        "Arch": "HVM64"
+      },
+      "c3.2xlarge": {
+        "Arch": "HVM64"
+      },
+      "c3.4xlarge": {
+        "Arch": "HVM64"
+      },
+      "c3.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "c4.large": {
+        "Arch": "HVM64"
+      },
+      "c4.xlarge": {
+        "Arch": "HVM64"
+      },
+      "c4.2xlarge": {
+        "Arch": "HVM64"
+      },
+      "c4.4xlarge": {
+        "Arch": "HVM64"
+      },
+      "c4.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "r3.large": {
+        "Arch": "HVM64"
+      },
+      "r3.xlarge": {
+        "Arch": "HVM64"
+      },
+      "r3.2xlarge": {
+        "Arch": "HVM64"
+      },
+      "r3.4xlarge": {
+        "Arch": "HVM64"
+      },
+      "r3.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "i2.xlarge": {
+        "Arch": "HVM64"
+      },
+      "i2.2xlarge": {
+        "Arch": "HVM64"
+      },
+      "i2.4xlarge": {
+        "Arch": "HVM64"
+      },
+      "i2.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "hi1.4xlarge": {
+        "Arch": "HVM64"
+      },
+      "hs1.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "cr1.8xlarge": {
+        "Arch": "HVM64"
+      },
+      "cc2.8xlarge": {
+        "Arch": "HVM64"
+      }
+    },
+    "AWSRegionArch2AMI": {
+      "us-east-1": {
+        "HVM64": "ami-6889d200"
+      },
+      "us-west-2": {
+        "HVM64": "ami-35143705"
+      },
+      "us-west-1": {
+        "HVM64": "ami-c37d9987"
+      },
+      "eu-west-1": {
+        "HVM64": "ami-edfd6e9a"
+      },
+      "eu-central-1": {
+        "HVM64": "ami-e6a694fb"
+      },
+      "ap-northeast-1": {
+        "HVM64": "ami-8f876e8f"
+      },
+      "ap-southeast-1": {
+        "HVM64": "ami-62546230"
+      },
+      "ap-southeast-2": {
+        "HVM64": "ami-c94e3ff3"
+      },
+      "sa-east-1": {
+        "HVM64": "ami-a757eeba"
+      }
+    }
+  },
+  "Resources": {
+    "HostKeys": {
+      "Properties": {
+        "UserName": {
+          "Ref": "ChefServerUser"
+        }
+      },
+      "Type": "AWS::IAM::AccessKey"
+    },
+    "transcodeOnDemand": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": [{
+          "Ref": "TargetSubnet"
+        }],
+        "LaunchConfigurationName": {
+          "Ref": "LaunchConfig"
+        },
+        "MinSize": "1",
+        "MaxSize": "10",
+        "DesiredCapacity": 1,
+        "Tags": [{
+   "Key" : "Name",
+   "Value" : {
+          "Fn::Join": [
+          "-", ["TranscodeOnDemand", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          },
+   "PropagateAtLaunch" : true
+},
+{
+           "Key" : "Elevator",
+           "Value" : "Elevator",
+           "PropagateAtLaunch" : true
+           },
+           {
+             "Key" : "ChefEnvironment",
+             "Value" : {
+              "Ref": "ChefEnvironment"
+              },
+              "PropagateAtLaunch" : true
+            }
+
+            ]
+      },
+      "CreationPolicy": {
+        "ResourceSignal": {
+          "Timeout": "PT5M",
+          "Count": 1
+        }
+      },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "1",
+          "MaxBatchSize": "1",
+          "PauseTime": "PT15M",
+          "WaitOnResourceSignals": "true"
+        }
+      }
+    },
+    "transcodeSpot": {
+      "Type": "AWS::AutoScaling::AutoScalingGroup",
+      "Properties": {
+        "VPCZoneIdentifier": [{
+          "Ref": "TargetSubnet"
+        }],
+
+        "LaunchConfigurationName": {
+          "Ref": "LaunchConfigSpot"
+        },
+        "MinSize": "0",
+        "MaxSize": "10",
+        "DesiredCapacity": 0,
+        "Tags": [{
+         "Key" : "Name",
+         "Value" : {
+          "Fn::Join": [
+          "-", ["TranscodeSpot", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          },
+          "PropagateAtLaunch" : true
+          },
+          {
+           "Key" : "Elevator",
+           "Value" : "Elevator",
+           "PropagateAtLaunch" : true
+           },
+           {
+             "Key" : "ChefEnvironment",
+             "Value" : {
+              "Ref": "ChefEnvironment"
+              },
+              "PropagateAtLaunch" : true
+            }
+
+            ]
+            },
+      "UpdatePolicy": {
+        "AutoScalingRollingUpdate": {
+          "MinInstancesInService": "0",
+          "MaxBatchSize": "1",
+          "PauseTime": "PT15M"
+        }
+      }
+    },
+    "LaunchConfig": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "files": {
+              "/etc/chef/client.rb": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "log_level        :info\n",
+                      "log_location     STDOUT\n",
+                      "ssl_verify_mode  :verify_none\n",
+                      "chef_server_url  '",
+                      {
+                        "Ref": "ChefServerURL"
+                      },
+                      "'\n",
+                      "environment      '",
+                      {
+                        "Ref": "ChefEnvironment"
+                      },
+                      "'\n",
+                      "validation_client_name '",
+                      {
+                        "Ref": "ChefValidator"
+                      },
+                      "'\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/home/ubuntu/.s3cfg": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[default]\n",
+                      "access_key = ",
+                      {
+                        "Ref": "HostKeys"
+                      },
+                      "\n",
+                      "secret_key = ",
+                      {
+                        "Fn::GetAtt": [
+                          "HostKeys",
+                          "SecretAccessKey"
+                        ]
+                      },
+                      "\n",
+                      "use_https = True\n"
+                    ]
+                  ]
+                },
+                "group": "ubuntu",
+                "mode": "000644",
+                "owner": "ubuntu"
+              },
+              "/etc/chef/roles.json": {
+                "content": {
+                  "run_list": [
+                    "role[transcode]"
+                  ],
+                  "stack_name": {
+                    "Ref": "AWS::StackName"
+                  },
+                  "aws_region": {
+                    "Ref": "AWS::Region"
+                  }
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/chef/ohai/hints/ec2.json": {
+                "content": "{}",
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "AssociatePublicIpAddress": true,
+        "InstanceType": {
+          "Ref": "TranscodeInstanceType"
+        },
+        "SecurityGroups":
+            {"Ref": "TargetSecurityGroups"},
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sdg",
+            "Ebs": {
+              "VolumeSize": 100,
+              "DeleteOnTermination": "true"
+            }
+          }
+        ],
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Fn::FindInMap": [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref": "TranscodeInstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "apt-get -y install python-setuptools\n",
+                "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                "apt-get install -y s3cmd\n",
+                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                "/usr/local/bin/cfn-init -v --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                " -s ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " -c default ",
+                " -r LaunchConfig",
+                "\n",
+                "/usr/local/bin/cfn-signal -e $? ",
+                "  --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "  --resource transcodeOnDemand ",
+                "  --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "s3cmd -c /home/ubuntu/.s3cfg get s3://",
+                {
+                  "Ref": "PrivateKeyBucket"
+                },
+                " /etc/chef/validation.pem > /tmp/put_validation_key.log 2>&1 || error_exit 'Failed to put Chef Server validation key'\n",
+                "\n",
+                "s3cmd -c /home/ubuntu/.s3cfg get s3://",
+                {
+                  "Ref": "ChefKeyBucket"
+                },
+                " /etc/chef/encrypted_data_bag_secret > /tmp/put_validation_key.log 2>&1 || error_exit 'Failed to put Chef Server validation key'\n",
+                "\n",
+                "LOCAL_IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`\n",
+                "IID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`\n",
+                "bash <(curl https://www.chef.io/chef/install.sh) ",
+                {
+                  "Ref": "ChefVersion"
+                },
+                "\n",
+                "mkdir /etc/chef\n",
+                "echo \"n ode_name        \\\"",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "-transcode-$LOCAL_IP-$IID\\\"\" >> /etc/chef/client.rb\n",
+                "chef-client -N ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "-transcode-$LOCAL_IP-$IID -j /etc/chef/roles.json",
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "LaunchConfigSpot": {
+      "Type": "AWS::AutoScaling::LaunchConfiguration",
+      "Metadata": {
+        "AWS::CloudFormation::Init": {
+          "config": {
+            "files": {
+              "/etc/chef/client.rb": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "log_level        :info\n",
+                      "log_location     STDOUT\n",
+                      "ssl_verify_mode  :verify_none\n",
+                      "chef_server_url  '",
+                      {
+                        "Ref": "ChefServerURL"
+                      },
+                      "'\n",
+                      "environment      '",
+                      {
+                        "Ref": "ChefEnvironment"
+                      },
+                      "'\n",
+                      "validation_client_name '",
+                      {
+                        "Ref": "ChefValidator"
+                      },
+                      "'\n"
+                    ]
+                  ]
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/home/ubuntu/.s3cfg": {
+                "content": {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "[default]\n",
+                      "access_key = ",
+                      {
+                        "Ref": "HostKeys"
+                      },
+                      "\n",
+                      "secret_key = ",
+                      {
+                        "Fn::GetAtt": [
+                          "HostKeys",
+                          "SecretAccessKey"
+                        ]
+                      },
+                      "\n",
+                      "use_https = True\n"
+                    ]
+                  ]
+                },
+                "group": "ubuntu",
+                "mode": "000644",
+                "owner": "ubuntu"
+              },
+              "/etc/chef/roles.json": {
+                "content": {
+                  "run_list": [
+                    "role[transcode]"
+                  ],
+                  "stack_name": {
+                    "Ref": "AWS::StackName"
+                  },
+                  "aws_region": {
+                    "Ref": "AWS::Region"
+                  }
+                },
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              },
+              "/etc/chef/ohai/hints/ec2.json": {
+                "content": "{}",
+                "mode": "000644",
+                "owner": "root",
+                "group": "root"
+              }
+            }
+          }
+        }
+      },
+      "Properties": {
+        "SpotPrice": {
+          "Ref": "TranscodeSpotPrice"
+        },
+        "InstanceType": {
+          "Ref": "TranscodeSpotType"
+        },
+        "SecurityGroups":
+            {"Ref": "TargetSecurityGroups"}
+        ,
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "BlockDeviceMappings": [
+          {
+            "DeviceName": "/dev/sdg",
+            "Ebs": {
+              "VolumeSize": 100,
+              "DeleteOnTermination": "true"
+            }
+          }
+        ],
+        "ImageId": {
+          "Fn::FindInMap": [
+            "AWSRegionArch2AMI",
+            {
+              "Ref": "AWS::Region"
+            },
+            {
+              "Fn::FindInMap": [
+                "AWSInstanceType2Arch",
+                {
+                  "Ref": "TranscodeInstanceType"
+                },
+                "Arch"
+              ]
+            }
+          ]
+        },
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "",
+              [
+                "#!/bin/bash\n",
+                "apt-get -y install python-setuptools\n",
+                "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                "apt-get install -y s3cmd\n",
+                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                "/usr/local/bin/cfn-init -v --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                " -s ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                " -c default ",
+                " -r LaunchConfigSpot",
+                "\n",
+                "/usr/local/bin/cfn-signal -e $? ",
+                "  --stack ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "  --resource transcodeSpot ",
+                "  --region ",
+                {
+                  "Ref": "AWS::Region"
+                },
+                "\n",
+                "s3cmd -c /home/ubuntu/.s3cfg get s3://",
+                {
+                  "Ref": "PrivateKeyBucket"
+                },
+                " /etc/chef/validation.pem > /tmp/put_validation_key.log 2>&1 || error_exit 'Failed to put Chef Server validation key'\n",
+                "\n",
+                "s3cmd -c /home/ubuntu/.s3cfg get s3://",
+                {
+                  "Ref": "ChefKeyBucket"
+                },
+                " /etc/chef/encrypted_data_bag_secret > /tmp/put_validation_key.log 2>&1 || error_exit 'Failed to put Chef Server validation key'\n",
+                "\n",
+                "LOCAL_IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`\n",
+                "IID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`\n",
+                "bash <(curl https://www.chef.io/chef/install.sh) ",
+                {
+                  "Ref": "ChefVersion"
+                },
+                "\n",
+                "mkdir /etc/chef\n",
+                "echo \"node_name        \\\"",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "-transcode-$LOCAL_IP-$IID\\\"\" >> /etc/chef/client.rb\n",
+                "chef-client -N ",
+                {
+                  "Ref": "AWS::StackName"
+                },
+                "-transcode-$LOCAL_IP-$IID -j /etc/chef/roles.json",
+                "\n"
+              ]
+            ]
+          }
+        }
+      }
+    },
+    "ScaleUpPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "transcodeSpot"
+        },
+        "Cooldown": "240",
+        "ScalingAdjustment": "1"
+      }
+    },
+    "ScaleDownPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "transcodeSpot"
+        },
+        "Cooldown": "60",
+        "ScalingAdjustment": "-1"
+      }
+    },
+    "ClusterLoadHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "2",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if queue length is too long",
+        "Period": "60",
+        "AlarmActions": [
+          {
+            "Ref": "ScaleUpPolicy"
+          }
+        ],
+        "Namespace": "AutoScaling",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": {
+          "Fn::Join": [
+          "-", ["transcodeStatus", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          }
+      }
+    },
+    "ClusterLoadLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Scale-down Queue goes lower",
+        "MetricName": {
+          "Fn::Join": [
+          "-", ["transcodeStatus", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          },
+        "Namespace": "AutoScaling",
+        "Statistic": "Average",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleDownPolicy"
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold"
+      }
+    }
+  },
+  "Outputs": {}
+}
