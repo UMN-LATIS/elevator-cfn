@@ -1008,6 +1008,80 @@
           }
         }
       }
+    },
+    "ScaleUpPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "transcodeSpot"
+        },
+        "Cooldown": "240",
+        "ScalingAdjustment": "1"
+      }
+    },
+    "ScaleDownPolicy": {
+      "Type": "AWS::AutoScaling::ScalingPolicy",
+      "Properties": {
+        "AdjustmentType": "ChangeInCapacity",
+        "AutoScalingGroupName": {
+          "Ref": "transcodeSpot"
+        },
+        "Cooldown": "60",
+        "ScalingAdjustment": "-1"
+      }
+    },
+    "ClusterLoadHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "2",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if queue length is too long",
+        "Period": "60",
+        "AlarmActions": [
+          {
+            "Ref": "ScaleUpPolicy"
+          }
+        ],
+        "Namespace": "AutoScaling",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": {
+          "Fn::Join": [
+          "-", ["transcodeStatus", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          }
+      }
+    },
+    "ClusterLoadLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Scale-down Queue goes lower",
+        "MetricName": {
+          "Fn::Join": [
+          "-", ["transcodeStatus", {
+            "Ref": "ChefEnvironment"
+          }]
+          ]
+          },
+        "Namespace": "AutoScaling",
+        "Statistic": "Average",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "Threshold": {
+          "Ref": "ScaleDownThreshold"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleDownPolicy"
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold"
+      }
     }
   },
   "Outputs": {}
