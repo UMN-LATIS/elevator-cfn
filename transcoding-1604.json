@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Elevator: Create an Amazon EC2 instance running the Ubuntu 14.04 (Trusty Tahr) AMI. The AMI is chosen based on the region in which the stack is run. This also creates an EC2 security group for the instance to give you SSH access. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Description": "AWS CloudFormation Elevator: Create an Amazon EC2 instance running the Ubuntu 16.04 AMI. The AMI is chosen based on the region in which the stack is run. This also creates an EC2 security group for the instance to give you SSH access. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
   "Parameters": {
     "KeyName": {
       "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -546,6 +546,7 @@
               "",
               [
                 "#!/bin/bash\n",
+                "apt-get update\n",
                 "apt-get -y install python-setuptools\n",
                 "pip install pyopenssl ndg-httpsclient pyasn1\n",
                 "apt-get install -y s3cmd\n",
@@ -740,6 +741,7 @@
               "",
               [
                 "#!/bin/bash\n",
+                "apt-get update\n",
                 "apt-get -y install python-setuptools\n",
                 "pip install pyopenssl ndg-httpsclient pyasn1\n",
                 "apt-get install -y s3cmd\n",

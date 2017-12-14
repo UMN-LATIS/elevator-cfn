@@ -118,13 +118,8 @@
       "Type": "String",
       "Default": ""
     },
-    "ChefServerKey": {
-      "Description": "AWS Key for Chef Encryption Key",
-      "Type": "String",
-      "Default": ""
-    },
-    "ChefServerSecret": {
-      "Description": "AWS Secret for Chef Encryption Key",
+    "ChefServerUser": {
+      "Description": "IAM user to get chef pem",
       "Type": "String",
       "Default": ""
     },
@@ -271,6 +266,14 @@
     }
   },
   "Resources": {
+    "HostKeys": {
+      "Properties": {
+        "UserName": {
+          "Ref": "ChefServerUser"
+        }
+      },
+      "Type": "AWS::IAM::AccessKey"
+    },
     "transcodeOnDemand": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
@@ -462,12 +465,15 @@
                       "[default]\n",
                       "access_key = ",
                       {
-                        "Ref": "ChefServerKey"
+                        "Ref": "HostKeys"
                       },
                       "\n",
                       "secret_key = ",
                       {
-                        "Ref": "ChefServerSecret"
+                        "Fn::GetAtt": [
+                          "HostKeys",
+                          "SecretAccessKey"
+                        ]
                       },
                       "\n",
                       "use_https = True\n"
@@ -653,12 +659,15 @@
                       "[default]\n",
                       "access_key = ",
                       {
-                        "Ref": "ChefServerKey"
+                        "Ref": "HostKeys"
                       },
                       "\n",
                       "secret_key = ",
                       {
-                        "Ref": "ChefServerSecret"
+                        "Fn::GetAtt": [
+                          "HostKeys",
+                          "SecretAccessKey"
+                        ]
                       },
                       "\n",
                       "use_https = True\n"
@@ -847,12 +856,15 @@
                       "[default]\n",
                       "access_key = ",
                       {
-                        "Ref": "ChefServerKey"
+                        "Ref": "HostKeys"
                       },
                       "\n",
                       "secret_key = ",
                       {
-                        "Ref": "ChefServerSecret"
+                        "Fn::GetAtt": [
+                          "HostKeys",
+                          "SecretAccessKey"
+                        ]
                       },
                       "\n",
                       "use_https = True\n"
