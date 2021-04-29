@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "AWS CloudFormation Elevator: Create an Amazon EC2 instance running the Ubuntu 16.04 AMI. The AMI is chosen based on the region in which the stack is run. This also creates an EC2 security group for the instance to give you SSH access. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
+  "Description": "AWS CloudFormation Elevator: Create an Amazon EC2 instance running the Ubuntu 20.04 AMI. The AMI is chosen based on the region in which the stack is run. This also creates an EC2 security group for the instance to give you SSH access. **WARNING** This template creates an Amazon EC2 instance. You will be billed for the AWS resources used if you create a stack from this template.",
   "Parameters": {
     "KeyName": {
       "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instance",
@@ -26,6 +26,10 @@
         "c3.8xlarge",
         "c4.large",
         "c4.xlarge",
+        "c5.large",
+        "c5.xlarge",
+        "c5a.large",
+        "c5a.xlarge",
         "c4.2xlarge",
         "c4.4xlarge",
         "c4.8xlarge",
@@ -67,6 +71,10 @@
         "c4.2xlarge",
         "c4.4xlarge",
         "c4.8xlarge",
+        "c5.large",
+        "c5.xlarge",
+        "c5a.large",
+        "c5a.xlarge",
         "r3.large",
         "r3.xlarge",
         "r3.2xlarge",
@@ -191,6 +199,18 @@
       "c4.xlarge": {
         "Arch": "HVM64"
       },
+      "c5.large": {
+        "Arch": "HVM64"
+      },
+      "c5.xlarge": {
+        "Arch": "HVM64"
+      },
+      "c5a.large": {
+        "Arch": "HVM64"
+      },
+      "c5a.xlarge": {
+        "Arch": "HVM64"
+      },
       "c4.2xlarge": {
         "Arch": "HVM64"
       },
@@ -242,31 +262,13 @@
     },
     "AWSRegionArch2AMI": {
       "us-east-1": {
-        "HVM64": "ami-1ac0120c"
+        "HVM64": "ami-0dba2cb6798deb6d8"
       },
       "us-west-2": {
-        "HVM64": "ami-edf6758d"
+        "HVM64": "ami-06e54d05255faf8f6"
       },
       "us-west-1": {
-        "HVM64": "ami-772b7517"
-      },
-      "eu-west-1": {
-        "HVM64": "ami-81f8d4e7"
-      },
-      "eu-central-1": {
-        "HVM64": "ami-0a974265"
-      },
-      "ap-northeast-1": {
-        "HVM64": "ami-1bfdb67c"
-      },
-      "ap-southeast-1": {
-        "HVM64": "ami-ee7bca8d"
-      },
-      "ap-southeast-2": {
-        "HVM64": "ami-4e686b2d"
-      },
-      "sa-east-1": {
-        "HVM64": "ami-c2781eae"
+        "HVM64": "ami-021809d9177640a20"
       }
     }
   },
@@ -554,10 +556,10 @@
               [
                 "#!/bin/bash\n",
                 "apt-get update\n",
-                "apt-get -y install python-setuptools\n",
-                "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                "apt-get -y install python3-pip\n",
+                "pip3 install pyopenssl ndg-httpsclient pyasn1\n",
                 "apt-get install -y s3cmd\n",
-                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                "pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz\n",
                 "/usr/local/bin/cfn-init -v --region ",
                 {
                   "Ref": "AWS::Region"
@@ -594,18 +596,18 @@
                 "\n",
                 "LOCAL_IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`\n",
                 "IID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`\n",
-                "bash <(curl https://www.chef.io/chef/install.sh) -v ",
+                "bash <(curl https://omnitruck.chef.io/install.sh) -v ",
                 {
                   "Ref": "ChefVersion"
                 },
                 "\n",
                 "mkdir /etc/chef\n",
-                "echo \"n ode_name        \\\"",
+                "echo \"node_name        \\\"",
                 {
                   "Ref": "AWS::StackName"
                 },
                 "-transcode-$LOCAL_IP-$IID\\\"\" >> /etc/chef/client.rb\n",
-                "chef-client -N ",
+                "chef-client --chef-license accept -N ",
                 {
                   "Ref": "AWS::StackName"
                 },
@@ -757,10 +759,10 @@
               [
                 "#!/bin/bash\n",
                 "apt-get update\n",
-                "apt-get -y install python-setuptools\n",
-                "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                "apt-get -y install python3-pip\n",
+                "pip3 install pyopenssl ndg-httpsclient pyasn1\n",
                 "apt-get install -y s3cmd\n",
-                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                "pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz\n",
                 "/usr/local/bin/cfn-init -v --region ",
                 {
                   "Ref": "AWS::Region"
@@ -770,14 +772,14 @@
                   "Ref": "AWS::StackName"
                 },
                 " -c default ",
-                " -r LaunchConfigSpot",
+                " -r LaunchConfig",
                 "\n",
                 "/usr/local/bin/cfn-signal -e $? ",
                 "  --stack ",
                 {
                   "Ref": "AWS::StackName"
                 },
-                "  --resource transcodeSpot ",
+                "  --resource transcodeOnDemand ",
                 "  --region ",
                 {
                   "Ref": "AWS::Region"
@@ -797,7 +799,7 @@
                 "\n",
                 "LOCAL_IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`\n",
                 "IID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`\n",
-                "bash <(curl https://www.chef.io/chef/install.sh) -v ",
+                "bash <(curl https://omnitruck.chef.io/install.sh) -v ",
                 {
                   "Ref": "ChefVersion"
                 },
@@ -808,7 +810,7 @@
                   "Ref": "AWS::StackName"
                 },
                 "-transcode-$LOCAL_IP-$IID\\\"\" >> /etc/chef/client.rb\n",
-                "chef-client -N ",
+                "chef-client --chef-license accept -N ",
                 {
                   "Ref": "AWS::StackName"
                 },
@@ -960,10 +962,10 @@
               [
                 "#!/bin/bash\n",
                 "apt-get update\n",
-                "apt-get -y install python-setuptools\n",
-                "pip install pyopenssl ndg-httpsclient pyasn1\n",
+                "apt-get -y install python3-pip\n",
+                "pip3 install pyopenssl ndg-httpsclient pyasn1\n",
                 "apt-get install -y s3cmd\n",
-                "easy_install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-latest.tar.gz\n",
+                "pip3 install https://s3.amazonaws.com/cloudformation-examples/aws-cfn-bootstrap-py3-latest.tar.gz\n",
                 "/usr/local/bin/cfn-init -v --region ",
                 {
                   "Ref": "AWS::Region"
@@ -973,14 +975,14 @@
                   "Ref": "AWS::StackName"
                 },
                 " -c default ",
-                " -r LaunchConfigSpotManual",
+                " -r LaunchConfig",
                 "\n",
                 "/usr/local/bin/cfn-signal -e $? ",
                 "  --stack ",
                 {
                   "Ref": "AWS::StackName"
                 },
-                "  --resource transcodeSpotManual ",
+                "  --resource transcodeOnDemand ",
                 "  --region ",
                 {
                   "Ref": "AWS::Region"
@@ -1000,7 +1002,7 @@
                 "\n",
                 "LOCAL_IP=`curl -s http://169.254.169.254/latest/meta-data/local-ipv4`\n",
                 "IID=`curl -s http://169.254.169.254/latest/meta-data/instance-id`\n",
-                "bash <(curl https://www.chef.io/chef/install.sh) -v ",
+                "bash <(curl https://omnitruck.chef.io/install.sh) -v ",
                 {
                   "Ref": "ChefVersion"
                 },
@@ -1011,7 +1013,7 @@
                   "Ref": "AWS::StackName"
                 },
                 "-transcode-$LOCAL_IP-$IID\\\"\" >> /etc/chef/client.rb\n",
-                "chef-client -N ",
+                "chef-client --chef-license accept -N ",
                 {
                   "Ref": "AWS::StackName"
                 },
