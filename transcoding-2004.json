@@ -146,13 +146,23 @@
       "Type": "Number",
       "Default": "4"
     },
+    "ProcessingScaleUpThreshold": {
+      "Description": "Scale up threshold",
+      "Type": "Number",
+      "Default": "14"
+    },
+    "ProcessingScaleDownThreshold": {
+      "Description": "Scale down threshold",
+      "Type": "Number",
+      "Default": "2"
+    },
     "TargetSubnet": {
       "Description": "Target Subnet for instances",
       "Type": "AWS::EC2::Subnet::Id"
     },
     "TargetSecurityGroups": {
       "Description": "Security Groups for Hosts",
-      "Type":"List<AWS::EC2::SecurityGroup::Id>"
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
     }
   },
   "Mappings": {
@@ -276,40 +286,46 @@
     "transcodeOnDemand": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "VPCZoneIdentifier": [{
-          "Ref": "TargetSubnet"
-        }],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "TargetSubnet"
+          }
+        ],
         "LaunchConfigurationName": {
           "Ref": "LaunchConfig"
         },
         "MinSize": "1",
         "MaxSize": "10",
         "DesiredCapacity": 1,
-        "Tags": [{
-   "Key" : "Name",
-   "Value" : {
-          "Fn::Join": [
-          "-", ["TranscodeOnDemand", {
-            "Ref": "ChefEnvironment"
-          }]
-          ]
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "TranscodeOnDemand",
+                  {
+                    "Ref": "ChefEnvironment"
+                  }
+                ]
+              ]
+            },
+            "PropagateAtLaunch": true
           },
-   "PropagateAtLaunch" : true
-},
-{
-           "Key" : "Elevator",
-           "Value" : "Elevator",
-           "PropagateAtLaunch" : true
-           },
-           {
-             "Key" : "ChefEnvironment",
-             "Value" : {
+          {
+            "Key": "Elevator",
+            "Value": "Elevator",
+            "PropagateAtLaunch": true
+          },
+          {
+            "Key": "ChefEnvironment",
+            "Value": {
               "Ref": "ChefEnvironment"
-              },
-              "PropagateAtLaunch" : true
-            }
-
-            ]
+            },
+            "PropagateAtLaunch": true
+          }
+        ]
       },
       "CreationPolicy": {
         "ResourceSignal": {
@@ -329,9 +345,11 @@
     "transcodeSpotManual": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "VPCZoneIdentifier": [{
-          "Ref": "TargetSubnet"
-        }],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "TargetSubnet"
+          }
+        ],
 
         "LaunchConfigurationName": {
           "Ref": "LaunchConfigSpotManual"
@@ -339,32 +357,36 @@
         "MinSize": "0",
         "MaxSize": "10",
         "DesiredCapacity": 0,
-        "Tags": [{
-         "Key" : "Name",
-         "Value" : {
-          "Fn::Join": [
-          "-", ["TranscodeSpotManual", {
-            "Ref": "ChefEnvironment"
-          }]
-          ]
-          },
-          "PropagateAtLaunch" : true
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "TranscodeSpotManual",
+                  {
+                    "Ref": "ChefEnvironment"
+                  }
+                ]
+              ]
+            },
+            "PropagateAtLaunch": true
           },
           {
-           "Key" : "Elevator",
-           "Value" : "Elevator",
-           "PropagateAtLaunch" : true
-           },
-           {
-             "Key" : "ChefEnvironment",
-             "Value" : {
+            "Key": "Elevator",
+            "Value": "Elevator",
+            "PropagateAtLaunch": true
+          },
+          {
+            "Key": "ChefEnvironment",
+            "Value": {
               "Ref": "ChefEnvironment"
-              },
-              "PropagateAtLaunch" : true
-            }
-
-            ]
             },
+            "PropagateAtLaunch": true
+          }
+        ]
+      },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
           "MinInstancesInService": "0",
@@ -376,9 +398,11 @@
     "transcodeSpot": {
       "Type": "AWS::AutoScaling::AutoScalingGroup",
       "Properties": {
-        "VPCZoneIdentifier": [{
-          "Ref": "TargetSubnet"
-        }],
+        "VPCZoneIdentifier": [
+          {
+            "Ref": "TargetSubnet"
+          }
+        ],
 
         "LaunchConfigurationName": {
           "Ref": "LaunchConfigSpot"
@@ -386,32 +410,36 @@
         "MinSize": "0",
         "MaxSize": "10",
         "DesiredCapacity": 0,
-        "Tags": [{
-         "Key" : "Name",
-         "Value" : {
-          "Fn::Join": [
-          "-", ["TranscodeSpot", {
-            "Ref": "ChefEnvironment"
-          }]
-          ]
-          },
-          "PropagateAtLaunch" : true
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": {
+              "Fn::Join": [
+                "-",
+                [
+                  "TranscodeSpot",
+                  {
+                    "Ref": "ChefEnvironment"
+                  }
+                ]
+              ]
+            },
+            "PropagateAtLaunch": true
           },
           {
-           "Key" : "Elevator",
-           "Value" : "Elevator",
-           "PropagateAtLaunch" : true
-           },
-           {
-             "Key" : "ChefEnvironment",
-             "Value" : {
+            "Key": "Elevator",
+            "Value": "Elevator",
+            "PropagateAtLaunch": true
+          },
+          {
+            "Key": "ChefEnvironment",
+            "Value": {
               "Ref": "ChefEnvironment"
-              },
-              "PropagateAtLaunch" : true
-            }
-
-            ]
             },
+            "PropagateAtLaunch": true
+          }
+        ]
+      },
       "UpdatePolicy": {
         "AutoScalingRollingUpdate": {
           "MinInstancesInService": "0",
@@ -482,9 +510,7 @@
               },
               "/etc/chef/roles.json": {
                 "content": {
-                  "run_list": [
-                    "role[transcode]"
-                  ],
+                  "run_list": ["role[transcode]"],
                   "stack_name": {
                     "Ref": "AWS::StackName"
                   },
@@ -511,8 +537,7 @@
         "InstanceType": {
           "Ref": "TranscodeInstanceType"
         },
-        "SecurityGroups":
-            {"Ref": "TargetSecurityGroups"},
+        "SecurityGroups": { "Ref": "TargetSecurityGroups" },
         "KeyName": {
           "Ref": "KeyName"
         },
@@ -526,7 +551,7 @@
           {
             "DeviceName": "/dev/sdg",
             "Ebs": {
-              "VolumeSize": 100,
+              "VolumeSize": 200,
               "DeleteOnTermination": "true",
               "VolumeType": "gp2"
             }
@@ -682,9 +707,7 @@
               },
               "/etc/chef/roles.json": {
                 "content": {
-                  "run_list": [
-                    "role[transcode]"
-                  ],
+                  "run_list": ["role[transcode]"],
                   "stack_name": {
                     "Ref": "AWS::StackName"
                   },
@@ -713,9 +736,7 @@
         "InstanceType": {
           "Ref": "TranscodeSpotType"
         },
-        "SecurityGroups":
-            {"Ref": "TargetSecurityGroups"}
-        ,
+        "SecurityGroups": { "Ref": "TargetSecurityGroups" },
         "KeyName": {
           "Ref": "KeyName"
         },
@@ -729,7 +750,7 @@
           {
             "DeviceName": "/dev/sdg",
             "Ebs": {
-              "VolumeSize": 100,
+              "VolumeSize": 200,
               "DeleteOnTermination": "true",
               "VolumeType": "gp2"
             }
@@ -885,9 +906,7 @@
               },
               "/etc/chef/roles.json": {
                 "content": {
-                  "run_list": [
-                    "role[transcode]"
-                  ],
+                  "run_list": ["role[transcode]"],
                   "stack_name": {
                     "Ref": "AWS::StackName"
                   },
@@ -916,9 +935,7 @@
         "InstanceType": {
           "Ref": "TranscodeSpotType"
         },
-        "SecurityGroups":
-            {"Ref": "TargetSecurityGroups"}
-        ,
+        "SecurityGroups": { "Ref": "TargetSecurityGroups" },
         "KeyName": {
           "Ref": "KeyName"
         },
@@ -932,7 +949,7 @@
           {
             "DeviceName": "/dev/sdg",
             "Ebs": {
-              "VolumeSize": 100,
+              "VolumeSize": 200,
               "DeleteOnTermination": "true",
               "VolumeType": "gp2"
             }
@@ -1067,11 +1084,15 @@
         "ComparisonOperator": "GreaterThanThreshold",
         "MetricName": {
           "Fn::Join": [
-          "-", ["transcodeStatus", {
-            "Ref": "ChefEnvironment"
-          }]
+            "-",
+            [
+              "transcodeStatus",
+              {
+                "Ref": "ChefEnvironment"
+              }
+            ]
           ]
-          }
+        }
       }
     },
     "ClusterLoadLow": {
@@ -1080,17 +1101,81 @@
         "AlarmDescription": "Scale-down Queue goes lower",
         "MetricName": {
           "Fn::Join": [
-          "-", ["transcodeStatus", {
-            "Ref": "ChefEnvironment"
-          }]
+            "-",
+            [
+              "transcodeStatus",
+              {
+                "Ref": "ChefEnvironment"
+              }
+            ]
           ]
-          },
+        },
         "Namespace": "AutoScaling",
         "Statistic": "Average",
         "Period": "60",
         "EvaluationPeriods": "15",
         "Threshold": {
           "Ref": "ScaleDownThreshold"
+        },
+        "AlarmActions": [
+          {
+            "Ref": "ScaleDownPolicy"
+          }
+        ],
+        "ComparisonOperator": "LessThanThreshold"
+      }
+    },
+    "ProcessingClusterLoadHigh": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "EvaluationPeriods": "2",
+        "Statistic": "Average",
+        "Threshold": {
+          "Ref": "ProcessingScaleUpThreshold"
+        },
+        "AlarmDescription": "Alarm if queue length is too long",
+        "Period": "60",
+        "AlarmActions": [
+          {
+            "Ref": "ScaleUpPolicy"
+          }
+        ],
+        "Namespace": "AutoScaling",
+        "ComparisonOperator": "GreaterThanThreshold",
+        "MetricName": {
+          "Fn::Join": [
+            "-",
+            [
+              "processingStatus",
+              {
+                "Ref": "ChefEnvironment"
+              }
+            ]
+          ]
+        }
+      }
+    },
+    "ProcessingClusterLoadLow": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Scale-down Queue goes lower",
+        "MetricName": {
+          "Fn::Join": [
+            "-",
+            [
+              "processingStatus",
+              {
+                "Ref": "ChefEnvironment"
+              }
+            ]
+          ]
+        },
+        "Namespace": "AutoScaling",
+        "Statistic": "Average",
+        "Period": "60",
+        "EvaluationPeriods": "15",
+        "Threshold": {
+          "Ref": "ProcessingScaleUpThreshold"
         },
         "AlarmActions": [
           {
